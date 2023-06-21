@@ -6,7 +6,12 @@ const router = express.Router();
 
 router
   .route('/')
-  .get(patientController.getPatients);
+  .get(patientController.getPatients)
+  .post(patientController.addPatient);
+
+router
+  .route('/employee')
+  .get(patientController.getEmployeesAndInsurance);
 
 router
   .route('/:patientId')

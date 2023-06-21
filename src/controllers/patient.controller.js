@@ -5,6 +5,33 @@ const MedicalCode = require('../models/medicalCode.model');
 const MedicalProcedure = require('../models/medicalProcedure.model');
 const MedicalCodeDiscount = require('../models/medicalCodeDiscount.model');
 
+const getEmployeesAndInsurance = async (req, res) => {
+    try {
+
+        const employees = await Employee.find();
+        const insurance = await Insurance.find();
+        const emp = employees.map((employee) => {
+            return {
+                name: employee.employerName,
+                id: employee._id
+            };
+        });
+        const ins = insurance.map((ins) => {
+            return {
+                name: ins.insurerName,
+                id: ins._id
+            };
+        });
+
+        res.status(200).json({
+            employees: emp,
+            insurance: ins
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
 const getPatients = async (req, res) => {
     try {
         console.log("getPatients",);
@@ -27,19 +54,9 @@ const getPatientDetails = async (req, res) => {
         res.status(200).json({
             patient: patient,
             employee: employee,
-            insurance: insurance,
+            insurer: insurance,
             procedures: procedures
         });
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}
-
-const getMedicalProcedures = async (req, res) => {
-    try {
-        console.log("getMedicalProcedures ",req.params);
-        const procedures = await MedicalProcedure.find();
-        res.status(200).json(procedures);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -93,9 +110,40 @@ const getProcedureDetails = async (req, res) => {
     }
 }
 
+const addPatient = async (req, res) => {
+    try {
+
+        const lastPatient = await Patient.find().sort({ recordID: -1 }).limit(1);
+        console.log("lastPatient ",lastPatient);
+        const recordID = getRecordID(lastPatient[0].recordID);
+        console.log("recordID ",recordID);
+        console.log("addPatient ",req.body);
+        const data = {
+            ...req.body,
+            recordID: recordID
+        }
+        console.log("data ",data);
+        const patient = new Patient(data);
+        const newPatient = await patient.save();
+        res.status(200).json(newPatient);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+}
+
+const getRecordID = (x) =>{
+    let numericPortion = x.match(/\d+/)[0]; // Extract numeric portion using regex
+    let incrementedNumericPortion = (parseInt(numericPortion) + 1).toString().padStart(numericPortion.length, '0'); // Increment and pad with leading zeros
+    let result = x.replace(numericPortion, incrementedNumericPortion);
+    return result;
+}
+
+
 
 module.exports = {
     getPatients,
     getPatientDetails,
     getProcedureDetails,
+    getEmployeesAndInsurance,
+    addPatient
 }
